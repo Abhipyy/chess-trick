@@ -10,9 +10,21 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   
   <!-- Main stylesheet -->
-  <link rel="stylesheet" href="style.css?v=14">
+  <link rel="stylesheet" href="style.css?v=15">
 </head>
 <body>
+
+  <!-- Simple password lock (one-time per device) -->
+  <div id="lock-screen" class="lock-screen">
+    <div class="lock-box">
+      <div class="lock-icon">♞</div>
+      <div class="lock-title">Trickmaster</div>
+      <div class="lock-sub">Enter password to continue</div>
+      <input type="password" id="lock-password" class="lock-input" placeholder="Password" autocomplete="off">
+      <button id="btn-unlock" class="btn-modal-save">Unlock</button>
+      <div id="lock-error" class="lock-error"></div>
+    </div>
+  </div>
 
   <!-- Mobile View Wrapper -->
   <div id="mobile-app">
@@ -116,7 +128,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
     import { getFirestore } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
-    import { firebaseConfig } from "./js/firebase-config.js?v=13";
+    import { firebaseConfig } from "./js/firebase-config.js?v=15";
 
     // Initialize Firebase and expose the database for js/firestore.js
     if (firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith("YOUR_")) {
@@ -125,7 +137,7 @@
     }
   </script>
 
-  <script type="module" src="js/app.js?v=14"></script>
+  <script type="module" src="js/app.js?v=15"></script>
 
   <div id="toast" class="toast"></div>
 

@@ -1,8 +1,8 @@
-import { TRICKS } from './tricks.js?v=14';
-import { sounds } from './sound.js?v=14';
-import { ChessGame } from './game.js?v=14';
-import { ChessBoard } from './board.js?v=14';
-import { connectFirestore, saveTrickToCloud, deleteTrickFromCloud } from './firestore.js?v=14';
+import { TRICKS } from './tricks.js?v=15';
+import { sounds } from './sound.js?v=15';
+import { ChessGame } from './game.js?v=15';
+import { ChessBoard } from './board.js?v=15';
+import { connectFirestore, saveTrickToCloud, deleteTrickFromCloud } from './firestore.js?v=15';
 
 /* ──────────────────────────────────────────────
    TrickCardController – one per visible card
@@ -141,9 +141,11 @@ class App {
     this.recordedMoves = [];
     this.redoStack = [];
     this.modalOpen = false;
+    this.unlocked = false;
 
     this.initDOM();
     this.initObserver();
+    this.initLock();
     this.initData();
   }
 
@@ -176,6 +178,32 @@ class App {
       this.renderFeed();
     } else {
       this.showToast('Live sync is on — tricks are shared in real time.');
+    }
+  }
+
+  /* ── Simple password lock (one-time per device) ── */
+  initLock() {
+    if (localStorage.getItem('trickmaster-unlocked') === '1') {
+      this.unlocked = true;
+      this.lockScreen.classList.add('hidden');
+      return;
+    }
+    this.lockScreen.classList.remove('hidden');
+    this.lockPassword.focus();
+  }
+
+  tryUnlock() {
+    if (this.lockPassword.value === 'knight4') {
+      this.unlocked = true;
+      localStorage.setItem('trickmaster-unlocked', '1');
+      this.lockScreen.classList.add('hidden');
+      this.lockPassword.value = '';
+      this.lockError.textContent = '';
+      this.showToast('Welcome!');
+    } else {
+      this.lockPassword.value = '';
+      this.lockPassword.focus();
+      this.lockError.textContent = 'Wrong password, try again.';
     }
   }
 
@@ -226,6 +254,10 @@ class App {
     this.btnRedoMove   = document.getElementById('btn-redo-move');
     this.btnResetBoard = document.getElementById('btn-reset-board');
     this.toastEl       = document.getElementById('toast');
+    this.lockScreen    = document.getElementById('lock-screen');
+    this.lockPassword  = document.getElementById('lock-password');
+    this.lockError     = document.getElementById('lock-error');
+    this.btnUnlock     = document.getElementById('btn-unlock');
 
     // Live modal chessboard for recording moves
     this.modalGame = new ChessGame();
@@ -269,6 +301,12 @@ class App {
     this.btnCancel.addEventListener('click', () => this.closeModal());
     document.getElementById('btn-cancel-modal-footer')?.addEventListener('click', () => this.closeModal());
     this.modalOverlay.addEventListener('click', () => this.closeModal());
+
+    // Lock screen
+    this.btnUnlock.addEventListener('click', () => this.tryUnlock());
+    this.lockPassword.addEventListener('keydown', e => {
+      if (e.key === 'Enter') this.tryUnlock();
+    });
   }
 
   initObserver() {

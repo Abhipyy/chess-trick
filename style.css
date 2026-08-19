@@ -31,6 +31,69 @@
   padding: 0;
 }
 
+/* ── Password lock screen ── */
+.lock-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-darkest);
+  transition: opacity 0.3s ease;
+}
+.lock-screen.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.lock-box {
+  width: min(320px, 85vw);
+  text-align: center;
+  padding: 32px 24px;
+  border-radius: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glow);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+.lock-icon {
+  font-size: 44px;
+  color: var(--accent-blue);
+}
+.lock-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 8px 0 4px;
+  letter-spacing: 0.5px;
+}
+.lock-sub {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+.lock-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  font-size: 15px;
+  margin-bottom: 14px;
+  outline: none;
+}
+.lock-input:focus {
+  border-color: var(--accent-blue);
+}
+.lock-box .btn-modal-save {
+  width: 100%;
+}
+.lock-error {
+  color: var(--accent-rose);
+  font-size: 13px;
+  margin-top: 10px;
+  min-height: 18px;
+}
+
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
   background-color: var(--bg-darkest);
