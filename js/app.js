@@ -1,8 +1,8 @@
-import { TRICKS } from './tricks.js?v=20';
-import { sounds } from './sound.js?v=20';
-import { ChessGame } from './game.js?v=20';
-import { ChessBoard } from './board.js?v=20';
-import { connectFirestore, saveTrickToCloud, deleteTrickFromCloud } from './firestore.js?v=20';
+import { TRICKS } from './tricks.js?v=21';
+import { sounds } from './sound.js?v=21';
+import { ChessGame } from './game.js?v=21';
+import { ChessBoard } from './board.js?v=21';
+import { connectFirestore, saveTrickToCloud, deleteTrickFromCloud } from './firestore.js?v=21';
 
 /* ──────────────────────────────────────────────
    TrickCardController – one per visible card
@@ -39,10 +39,10 @@ class TrickCardController {
 
     // Touching the board makes this the one card that plays.
     this.boardEl.addEventListener('click', () => this.touchToPlay());
-    // On PC, hovering the card also starts it; leaving pauses it.
+    // On PC, hovering the card also starts it; leaving pauses it in place.
     if (window.matchMedia('(hover: hover)').matches) {
       this.cardEl.addEventListener('mouseenter', () => this.touchToPlay());
-      this.cardEl.addEventListener('mouseleave', () => this.stopAndReset());
+      this.cardEl.addEventListener('mouseleave', () => this.pause());
     }
     this.btnPlay.addEventListener('click', () => this.togglePlay());
     this.btnPrev.addEventListener('click', () => { this.touchActivate(); this.pause(); this.stepBackward(); });
