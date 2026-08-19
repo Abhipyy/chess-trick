@@ -1,8 +1,8 @@
-import { TRICKS } from './tricks.js?v=24';
-import { sounds } from './sound.js?v=24';
-import { ChessGame } from './game.js?v=24';
-import { ChessBoard } from './board.js?v=24';
-import { connectFirestore, saveTrickToCloud, deleteTrickFromCloud } from './firestore.js?v=24';
+import { TRICKS } from './tricks.js?v=25';
+import { sounds } from './sound.js?v=25';
+import { ChessGame } from './game.js?v=25';
+import { ChessBoard } from './board.js?v=25';
+import { connectFirestore, saveTrickToCloud, deleteTrickFromCloud } from './firestore.js?v=25';
 
 /* ──────────────────────────────────────────────
    TrickCardController – one per visible card
@@ -484,6 +484,7 @@ class App {
 
     this.modalBoard.setOrientation(this.formSide.value === 'White' ? 'w' : 'b');
     this.modalBoard.render();
+    this.updateModalCheck();
     this.renderMoveList();
     this.modal.classList.add('open');
     this.modalOverlay.classList.add('open');
@@ -522,6 +523,7 @@ class App {
     this.recordedMoves.push({ move: `${from}-${to}`, san: this.generateSAN(info) });
     this.redoStack = []; // clear redo on new move
     this.modalBoard.render();
+    this.updateModalCheck();
     this.renderMoveList();
     return true;
   }
@@ -553,6 +555,19 @@ class App {
     return san;
   }
 
+  // Show a red glow on the king that is currently in check (or clear it).
+  updateModalCheck() {
+    this.modalBoard.setHighlight('check', null);
+    const color = this.modalGame.turn;
+    if (!this.modalGame.isInCheck(color)) return;
+    let ks = null;
+    outer: for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+      const p = this.modalGame.getPieceAt(r, c);
+      if (p && p.type === 'k' && p.color === color) { ks = this.modalGame.getSquareName(r, c); break outer; }
+    }
+    if (ks) this.modalBoard.setHighlight('check', ks);
+  }
+
   replayRecordedMoves() {
     this.modalGame.reset();
     for (const m of this.recordedMoves) {
@@ -560,6 +575,7 @@ class App {
       this.modalGame.makeMove(f, to);
     }
     this.modalBoard.render();
+    this.updateModalCheck();
   }
 
   undoModalMove() {
@@ -568,6 +584,7 @@ class App {
     this.redoStack.push(undone);
     this.modalGame.undoLastMove();
     this.modalBoard.render();
+    this.updateModalCheck();
     this.renderMoveList();
   }
 
@@ -578,6 +595,7 @@ class App {
     const [f, to] = redone.move.split('-');
     this.modalGame.makeMove(f, to);
     this.modalBoard.render();
+    this.updateModalCheck();
     this.renderMoveList();
   }
 
@@ -593,6 +611,7 @@ class App {
     this.redoStack = [];
     this.modalGame.reset();
     this.modalBoard.render();
+    this.updateModalCheck();
     this.renderMoveList();
   }
 
