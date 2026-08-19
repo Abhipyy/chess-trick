@@ -66,6 +66,26 @@ export class ChessBoard {
 
     window.addEventListener('mouseup', this.handleEnd.bind(this));
     window.addEventListener('touchend', this.handleEnd.bind(this));
+
+    // Suppress the ghost mouse events mobile browsers fire after a touch,
+    // otherwise a single tap can trigger two moves / phantom errors.
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (isTouch) {
+      this.boardEl.addEventListener('click', e => {
+        if (Date.now() - (this._lastTouchTime || 0) < 800) e.preventDefault();
+      }, true);
+    }
+  }
+
+  _markTouch(e) {
+    if (e.type.startsWith('touch')) this._lastTouchTime = Date.now();
+  }
+
+  _isGhostMouse(e) {
+    if (!e.type.startsWith('touch') && this._lastTouchTime && Date.now() - this._lastTouchTime < 800) {
+      return true;
+    }
+    return false;
   }
 
   // Clear visual highlights
@@ -272,18 +292,27 @@ export class ChessBoard {
   handleStart(e) {
     if (!this.interactive || !this.game) return;
 
+    this._markTouch(e);
+    if (this._isGhostMouse(e)) return;
+
     // Dismiss any focused input (e.g. trick-name field) so the mobile
     // keyboard doesn't stay open over the board.
     if (document.activeElement && document.activeElement.blur) {
       document.activeElement.blur();
     }
 
+    // Legal destinations of the currently selected piece (if any).
+    const legalTargets = this.selectedSquare
+      ? this.game.getLegalMoves(this.game.turn).filter(m => m.from === this.selectedSquare).map(m => m.to)
+      : [];
+
     // Identify if clicking/dragging a piece
     const target = e.target.closest('.piece');
     if (!target) {
-      // Clicking a square: if a piece is selected, try tap-to-move
+      // Clicking a square: if a piece is selected and this square is a
+      // legal target, try tap-to-move.
       const square = e.target.closest('.square');
-      if (square && this.selectedSquare && this.selectedSquare !== square.dataset.name) {
+      if (square && this.selectedSquare && this.selectedSquare !== square.dataset.name && legalTargets.includes(square.dataset.name)) {
         const done = this.executeTapMove(square.dataset.name);
         if (done) return;
       }
@@ -299,12 +328,20 @@ export class ChessBoard {
     const row = parseInt(target.dataset.row, 10);
     const col = parseInt(target.dataset.col, 10);
     const sqName = this.game.getSquareName(row, col);
+    const tappedColor = target.dataset.color;
 
-    // If a piece is already selected and this square is a legal target
-    // (e.g. capturing an opponent's piece), move there instead of selecting.
+    // If a piece is already selected:
     if (this.selectedSquare && this.selectedSquare !== sqName) {
-      const done = this.executeTapMove(sqName);
-      if (done) return;
+      if (legalTargets.includes(sqName)) {
+        // This is a legal destination (e.g. capturing an opponent piece) → move.
+        const done = this.executeTapMove(sqName);
+        if (done) return;
+      }
+      if (tappedColor !== this.game.turn) {
+        // Tapped an opponent piece that can't be captured: keep selection, no error.
+        return;
+      }
+      // Otherwise it's our own piece → fall through to re-select it.
     }
 
     e.preventDefault();
@@ -325,6 +362,9 @@ export class ChessBoard {
 
   handleMove(e) {
     if (!this.draggingPiece) return;
+
+    this._markTouch(e);
+    if (this._isGhostMouse(e)) return;
     
     e.preventDefault();
     const coords = this.getEventXY(e);
@@ -336,6 +376,9 @@ export class ChessBoard {
 
   handleEnd(e) {
     if (!this.draggingPiece) return;
+
+    this._markTouch(e);
+    if (this._isGhostMouse(e)) return;
 
     const pieceEl = this.draggingPiece;
     this.draggingPiece = null;

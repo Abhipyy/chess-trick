@@ -1,8 +1,8 @@
-import { TRICKS } from './tricks.js?v=23';
-import { sounds } from './sound.js?v=23';
-import { ChessGame } from './game.js?v=23';
-import { ChessBoard } from './board.js?v=23';
-import { connectFirestore, saveTrickToCloud, deleteTrickFromCloud } from './firestore.js?v=23';
+import { TRICKS } from './tricks.js?v=24';
+import { sounds } from './sound.js?v=24';
+import { ChessGame } from './game.js?v=24';
+import { ChessBoard } from './board.js?v=24';
+import { connectFirestore, saveTrickToCloud, deleteTrickFromCloud } from './firestore.js?v=24';
 
 /* ──────────────────────────────────────────────
    TrickCardController – one per visible card
