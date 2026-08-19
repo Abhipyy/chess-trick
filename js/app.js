@@ -1,8 +1,8 @@
-import { TRICKS } from './tricks.js?v=19';
-import { sounds } from './sound.js?v=19';
-import { ChessGame } from './game.js?v=19';
-import { ChessBoard } from './board.js?v=19';
-import { connectFirestore, saveTrickToCloud, deleteTrickFromCloud } from './firestore.js?v=19';
+import { TRICKS } from './tricks.js?v=20';
+import { sounds } from './sound.js?v=20';
+import { ChessGame } from './game.js?v=20';
+import { ChessBoard } from './board.js?v=20';
+import { connectFirestore, saveTrickToCloud, deleteTrickFromCloud } from './firestore.js?v=20';
 
 /* ──────────────────────────────────────────────
    TrickCardController – one per visible card
@@ -20,6 +20,7 @@ class TrickCardController {
     this.board.setGame(this.game);
     this.moveIndex = 0;
     this.isPlaying = false;
+    this.manuallyPaused = false;
     this.timer = null;
     this.speed = 1000;
     this.initDOM();
@@ -41,9 +42,9 @@ class TrickCardController {
     // On PC, hovering the card also starts it; leaving pauses it.
     if (window.matchMedia('(hover: hover)').matches) {
       this.cardEl.addEventListener('mouseenter', () => this.touchToPlay());
-      this.cardEl.addEventListener('mouseleave', () => this.pause());
+      this.cardEl.addEventListener('mouseleave', () => this.stopAndReset());
     }
-    this.btnPlay.addEventListener('click', () => this.pause());
+    this.btnPlay.addEventListener('click', () => this.togglePlay());
     this.btnPrev.addEventListener('click', () => { this.touchActivate(); this.pause(); this.stepBackward(); });
     this.btnNext.addEventListener('click', () => { this.touchActivate(); this.pause(); this.stepForward(); });
     this.btnReset.addEventListener('click', () => { this.touchActivate(); this.pause(); this.reset(); });
@@ -54,14 +55,23 @@ class TrickCardController {
     if (this.onActivate) this.onActivate(this.trick.id);
   }
 
-  // Touch on board/play: activate, then start from the beginning.
+  // Touch/hover: activate, then start from the beginning (unless manually paused).
   touchToPlay() {
+    if (this.manuallyPaused) return;
     this.touchActivate();
     this.reset();
     this.play();
   }
 
-  togglePlay() { this.isPlaying ? this.pause() : this.play(); }
+  togglePlay() {
+    if (this.isPlaying) {
+      this.manuallyPaused = true;
+      this.pause();
+    } else {
+      this.manuallyPaused = false;
+      this.play();
+    }
+  }
 
   play() {
     if (this.isPlaying) return;
@@ -83,6 +93,13 @@ class TrickCardController {
     this.isPlaying = false;
     this.btnPlay.innerHTML = '<span class="material-icons">play_arrow</span>';
     if (this.timer) { clearTimeout(this.timer); this.timer = null; }
+  }
+
+  // Pause and return the board to the initial position.
+  stopAndReset() {
+    this.pause();
+    this.manuallyPaused = false;
+    this.reset();
   }
 
   reset() {
@@ -336,17 +353,16 @@ class App {
         const c = this.controllers.get(entry.target.dataset.id);
         if (!c) return;
         // Never simulate behind the lock screen or modal.
-        if (!this.unlocked || this.modalOpen) { c.pause(); return; }
-        // Pause cards that scroll out of view; playback itself is
-        // touch-driven, not scroll-driven.
-        if (!entry.isIntersecting) c.pause();
+        if (!this.unlocked || this.modalOpen) { c.stopAndReset(); return; }
+        // Cards scrolled out of view stop and reset to the start position.
+        if (!entry.isIntersecting) c.stopAndReset();
       });
     }, { threshold: 0.3 });
   }
 
-  // Called when a card is touched: pause every other card.
+  // Called when a card is touched: stop + reset every other card.
   activateCard(id) {
-    this.controllers.forEach(c => { if (c.trick.id !== id) c.pause(); });
+    this.controllers.forEach(c => { if (c.trick.id !== id) c.stopAndReset(); });
   }
 
   /* ── Feed rendering ── */
@@ -489,7 +505,7 @@ class App {
   }
 
   pauseAllControllers() {
-    this.controllers.forEach(c => c.pause());
+    this.controllers.forEach(c => c.stopAndReset());
   }
 
   /* ── Live board move recording ── */
