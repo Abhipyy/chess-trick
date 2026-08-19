@@ -272,6 +272,12 @@ export class ChessBoard {
   handleStart(e) {
     if (!this.interactive || !this.game) return;
 
+    // Dismiss any focused input (e.g. trick-name field) so the mobile
+    // keyboard doesn't stay open over the board.
+    if (document.activeElement && document.activeElement.blur) {
+      document.activeElement.blur();
+    }
+
     // Identify if clicking/dragging a piece
     const target = e.target.closest('.piece');
     if (!target) {
@@ -290,11 +296,18 @@ export class ChessBoard {
       return;
     }
 
-    e.preventDefault();
-
     const row = parseInt(target.dataset.row, 10);
     const col = parseInt(target.dataset.col, 10);
     const sqName = this.game.getSquareName(row, col);
+
+    // If a piece is already selected and this square is a legal target
+    // (e.g. capturing an opponent's piece), move there instead of selecting.
+    if (this.selectedSquare && this.selectedSquare !== sqName) {
+      const done = this.executeTapMove(sqName);
+      if (done) return;
+    }
+
+    e.preventDefault();
 
     // Set selection
     this.selectedSquare = sqName;

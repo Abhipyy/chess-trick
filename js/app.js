@@ -1,8 +1,8 @@
-import { TRICKS } from './tricks.js?v=22';
-import { sounds } from './sound.js?v=22';
-import { ChessGame } from './game.js?v=22';
-import { ChessBoard } from './board.js?v=22';
-import { connectFirestore, saveTrickToCloud, deleteTrickFromCloud } from './firestore.js?v=22';
+import { TRICKS } from './tricks.js?v=23';
+import { sounds } from './sound.js?v=23';
+import { ChessGame } from './game.js?v=23';
+import { ChessBoard } from './board.js?v=23';
+import { connectFirestore, saveTrickToCloud, deleteTrickFromCloud } from './firestore.js?v=23';
 
 /* ──────────────────────────────────────────────
    TrickCardController – one per visible card
@@ -489,7 +489,11 @@ class App {
     this.modalOverlay.classList.add('open');
     this.modalOpen = true;
     this.pauseAllControllers();
-    setTimeout(() => this.formName.focus(), 300);
+    // Only auto-focus the name field on devices with a real keyboard;
+    // on mobile it pops the keyboard up over the board.
+    if (window.matchMedia('(hover: hover)').matches) {
+      setTimeout(() => this.formName.focus(), 300);
+    }
   }
 
   /* ── Modal: close ── */
