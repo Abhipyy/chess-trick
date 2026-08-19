@@ -1,8 +1,8 @@
-import { TRICKS } from './tricks.js?v=16';
-import { sounds } from './sound.js?v=16';
-import { ChessGame } from './game.js?v=16';
-import { ChessBoard } from './board.js?v=16';
-import { connectFirestore, saveTrickToCloud, deleteTrickFromCloud } from './firestore.js?v=16';
+import { TRICKS } from './tricks.js?v=17';
+import { sounds } from './sound.js?v=17';
+import { ChessGame } from './game.js?v=17';
+import { ChessBoard } from './board.js?v=17';
+import { connectFirestore, saveTrickToCloud, deleteTrickFromCloud } from './firestore.js?v=17';
 
 /* ──────────────────────────────────────────────
    TrickCardController – one per visible card
@@ -311,21 +311,23 @@ class App {
 
   initObserver() {
     this.observer = new IntersectionObserver(entries => {
+      let best = null;
+      let bestRatio = 0;
       entries.forEach(entry => {
         const c = this.controllers.get(entry.target.dataset.id);
         if (!c) return;
         if (this.modalOpen) { c.pause(); return; }
-        if (entry.isIntersecting) {
-          // Only one card runs at a time.
-          this.controllers.forEach(other => { if (other !== c) other.pause(); });
-          // Restart from the beginning every time it comes into view.
-          c.reset();
-          c.play();
-        } else {
-          c.pause();
-        }
+        if (!entry.isIntersecting) { c.pause(); return; }
+        if (entry.intersectionRatio > bestRatio) { best = c; bestRatio = entry.intersectionRatio; }
       });
-    }, { threshold: 0.4 });
+      if (best) {
+        // Only one card runs at a time: pause every other card.
+        this.controllers.forEach(other => { if (other !== best) other.pause(); });
+        // Restart from the beginning each time it becomes the visible card.
+        best.reset();
+        best.play();
+      }
+    }, { threshold: [0.1, 0.3, 0.5, 0.7, 0.9] });
   }
 
   /* ── Feed rendering ── */
