@@ -1,8 +1,8 @@
-import { TRICKS } from './tricks.js?v=15';
-import { sounds } from './sound.js?v=15';
-import { ChessGame } from './game.js?v=15';
-import { ChessBoard } from './board.js?v=15';
-import { connectFirestore, saveTrickToCloud, deleteTrickFromCloud } from './firestore.js?v=15';
+import { TRICKS } from './tricks.js?v=16';
+import { sounds } from './sound.js?v=16';
+import { ChessGame } from './game.js?v=16';
+import { ChessBoard } from './board.js?v=16';
+import { connectFirestore, saveTrickToCloud, deleteTrickFromCloud } from './firestore.js?v=16';
 
 /* ──────────────────────────────────────────────
    TrickCardController – one per visible card
@@ -315,7 +315,15 @@ class App {
         const c = this.controllers.get(entry.target.dataset.id);
         if (!c) return;
         if (this.modalOpen) { c.pause(); return; }
-        entry.isIntersecting ? c.play() : c.pause();
+        if (entry.isIntersecting) {
+          // Only one card runs at a time.
+          this.controllers.forEach(other => { if (other !== c) other.pause(); });
+          // Restart from the beginning every time it comes into view.
+          c.reset();
+          c.play();
+        } else {
+          c.pause();
+        }
       });
     }, { threshold: 0.4 });
   }
