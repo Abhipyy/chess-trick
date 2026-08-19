@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess Tricks &amp; Traps Mobile Trainer</title>
+  <meta name="description" content="Master famous chess traps and openings with this mobile-friendly visual feed.">
+  
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  
+  <!-- Main stylesheet -->
+  <link rel="stylesheet" href="style.css?v=14">
+</head>
+<body>
+
+  <!-- Mobile View Wrapper -->
+  <div id="mobile-app">
+    
+    <!-- Header -->
+    <header>
+      <div class="logo">
+        <div class="logo-icon">♞</div>
+        <div class="logo-text">Trickmaster</div>
+      </div>
+      <div class="header-actions">
+        <button id="btn-add-trick" class="btn-add-trick" title="Add new trick">
+          <span class="material-icons">add</span>
+        </button>
+        <button id="sound-toggle" class="sound-toggle-btn" title="Toggle Sound">
+          <span class="material-icons">volume_up</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Navigation & Filters -->
+    <div class="sticky-controls">
+      <div class="search-container">
+        <span class="material-icons search-icon">search</span>
+        <input type="text" id="search-tricks" placeholder="Search traps, openings...">
+      </div>
+      <div class="filter-tabs">
+        <button id="filter-all" class="filter-btn active" data-filter="all">All</button>
+        <button id="filter-white" class="filter-btn" data-filter="White">White's Traps</button>
+        <button id="filter-black" class="filter-btn" data-filter="Black">Black's Traps</button>
+      </div>
+    </div>
+
+    <!-- Scrollable Feed -->
+    <main id="tricks-feed" class="feed-container"></main>
+
+  </div>
+
+  <!-- ──────── Add/Edit Trick Modal ──────── -->
+  <div id="modal-overlay" class="modal-overlay"></div>
+
+  <div id="trick-modal" class="trick-modal">
+    <div class="modal-header">
+      <h2 id="modal-title">Add New Trick</h2>
+      <button id="btn-cancel-modal" class="btn-icon modal-close">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="form-group">
+        <label for="form-name">Trick Name *</label>
+        <input id="form-name" type="text" placeholder="e.g. Scholar's Mate">
+      </div>
+
+      <div class="form-group">
+        <label for="form-opening">Opening</label>
+        <input id="form-opening" type="text" placeholder="e.g. Open Game">
+      </div>
+
+      <div class="form-row-two">
+        <div class="form-group">
+          <label for="form-side">Side</label>
+          <select id="form-side">
+            <option value="White">White</option>
+            <option value="Black">Black</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Moves <span class="label-hint">(drag pieces on the board to record each move)</span></label>
+        <div class="modal-board-wrap">
+          <div id="modal-board"></div>
+        </div>
+        <div class="modal-board-controls">
+          <button id="btn-undo-move" class="board-ctrl-btn" type="button" disabled>
+            <span class="material-icons">undo</span> Undo
+          </button>
+          <button id="btn-redo-move" class="board-ctrl-btn" type="button" disabled>
+            <span class="material-icons">redo</span> Redo
+          </button>
+          <button id="btn-reset-board" class="board-ctrl-btn" type="button" disabled>
+            <span class="material-icons">restart_alt</span> Reset
+          </button>
+        </div>
+        <div id="modal-moves-empty" class="modal-moves-empty">No moves yet — drag a piece on the board.</div>
+        <div id="form-moves-list" class="modal-moves-list"></div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button id="btn-cancel-modal-footer" class="btn-modal-cancel">Cancel</button>
+      <button id="btn-save-trick" class="btn-modal-save">Save Trick</button>
+    </div>
+  </div>
+
+  <!-- Firebase SDK (cloud sync) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+    import { firebaseConfig } from "./js/firebase-config.js?v=13";
+
+    // Initialize Firebase and expose the database for js/firestore.js
+    if (firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith("YOUR_")) {
+      const app = initializeApp(firebaseConfig);
+      window.__firestoreDb = getFirestore(app);
+    }
+  </script>
+
+  <script type="module" src="js/app.js?v=14"></script>
+
+  <div id="toast" class="toast"></div>
+
+</body>
+</html>
