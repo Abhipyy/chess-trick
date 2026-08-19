@@ -1,16 +1,17 @@
-import { TRICKS } from './tricks.js?v=17';
-import { sounds } from './sound.js?v=17';
-import { ChessGame } from './game.js?v=17';
-import { ChessBoard } from './board.js?v=17';
-import { connectFirestore, saveTrickToCloud, deleteTrickFromCloud } from './firestore.js?v=17';
+import { TRICKS } from './tricks.js?v=18';
+import { sounds } from './sound.js?v=18';
+import { ChessGame } from './game.js?v=18';
+import { ChessBoard } from './board.js?v=18';
+import { connectFirestore, saveTrickToCloud, deleteTrickFromCloud } from './firestore.js?v=18';
 
 /* ──────────────────────────────────────────────
    TrickCardController – one per visible card
 ────────────────────────────────────────────── */
 class TrickCardController {
-  constructor(trick, getSoundEnabled) {
+  constructor(trick, getSoundEnabled, onActivate) {
     this.trick = trick;
     this.getSoundEnabled = getSoundEnabled;
+    this.onActivate = onActivate;
     this.game = new ChessGame();
     this.board = new ChessBoard(`board-container-${this.trick.id}`, {
       interactive: false,
@@ -27,6 +28,7 @@ class TrickCardController {
 
   initDOM() {
     this.cardEl = document.getElementById(`card-${this.trick.id}`);
+    this.boardEl = document.getElementById(`board-container-${this.trick.id}`);
     this.btnPlay = this.cardEl.querySelector('.btn-play');
     this.btnPrev = this.cardEl.querySelector('.btn-prev');
     this.btnNext = this.cardEl.querySelector('.btn-next');
@@ -34,10 +36,24 @@ class TrickCardController {
     this.moveLabel = this.cardEl.querySelector('.card-move-san');
     this.moveCount = this.cardEl.querySelector('.card-move-count');
 
-    this.btnPlay.addEventListener('click', () => this.togglePlay());
-    this.btnPrev.addEventListener('click', () => { this.pause(); this.stepBackward(); });
-    this.btnNext.addEventListener('click', () => { this.pause(); this.stepForward(); });
-    this.btnReset.addEventListener('click', () => { this.pause(); this.reset(); });
+    // Touching the board makes this the one card that plays.
+    this.boardEl.addEventListener('click', () => this.touchToPlay());
+    this.btnPlay.addEventListener('click', () => this.touchToPlay());
+    this.btnPrev.addEventListener('click', () => { this.touchActivate(); this.pause(); this.stepBackward(); });
+    this.btnNext.addEventListener('click', () => { this.touchActivate(); this.pause(); this.stepForward(); });
+    this.btnReset.addEventListener('click', () => { this.touchActivate(); this.pause(); this.reset(); });
+  }
+
+  // Make this card the only active one, pausing every other card.
+  touchActivate() {
+    if (this.onActivate) this.onActivate(this.trick.id);
+  }
+
+  // Touch on board/play: activate, then start from the beginning.
+  touchToPlay() {
+    this.touchActivate();
+    this.reset();
+    this.play();
   }
 
   togglePlay() { this.isPlaying ? this.pause() : this.play(); }
@@ -311,23 +327,21 @@ class App {
 
   initObserver() {
     this.observer = new IntersectionObserver(entries => {
-      let best = null;
-      let bestRatio = 0;
       entries.forEach(entry => {
         const c = this.controllers.get(entry.target.dataset.id);
         if (!c) return;
-        if (this.modalOpen) { c.pause(); return; }
-        if (!entry.isIntersecting) { c.pause(); return; }
-        if (entry.intersectionRatio > bestRatio) { best = c; bestRatio = entry.intersectionRatio; }
+        // Never simulate behind the lock screen or modal.
+        if (!this.unlocked || this.modalOpen) { c.pause(); return; }
+        // Pause cards that scroll out of view; playback itself is
+        // touch-driven, not scroll-driven.
+        if (!entry.isIntersecting) c.pause();
       });
-      if (best) {
-        // Only one card runs at a time: pause every other card.
-        this.controllers.forEach(other => { if (other !== best) other.pause(); });
-        // Restart from the beginning each time it becomes the visible card.
-        best.reset();
-        best.play();
-      }
-    }, { threshold: [0.1, 0.3, 0.5, 0.7, 0.9] });
+    }, { threshold: 0.3 });
+  }
+
+  // Called when a card is touched: pause every other card.
+  activateCard(id) {
+    this.controllers.forEach(c => { if (c.trick.id !== id) c.pause(); });
   }
 
   /* ── Feed rendering ── */
@@ -399,7 +413,7 @@ class App {
 
       this.feedEl.appendChild(card);
 
-      const ctrl = new TrickCardController(trick, () => this.soundEnabled);
+      const ctrl = new TrickCardController(trick, () => this.soundEnabled, (id) => this.activateCard(id));
       this.controllers.set(trick.id, ctrl);
       this.observer.observe(card);
     });
